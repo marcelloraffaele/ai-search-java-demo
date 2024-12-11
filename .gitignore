@@ -400,3 +400,5 @@ FodyWeavers.xsd
 #java
 /target/
 *.class
+.env
+settings.json

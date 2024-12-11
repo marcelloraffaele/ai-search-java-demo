@@ -1,6 +1,7 @@
 package azure.search.sample;
 
 import azure.search.sample.resume.Resume;
+import io.github.cdimascio.dotenv.Dotenv;
 
 import com.azure.core.credential.AzureKeyCredential;
 import com.azure.search.documents.*;
@@ -13,15 +14,16 @@ import com.azure.search.documents.models.*;
 import java.util.*;
 
 public class PushToIndexPojo {
-    private static final String SEARCH_SERVICE_ENDPOINT = Constraints.SERVICE_ENDPOINT;
-    private static final String SEARCH_API_KEY = Constraints.KEY;
+    private static final Dotenv dotenv = Dotenv.load();
+    private static final String SEARCH_SERVICE_ENDPOINT = dotenv.get("AZURE_AI_SEARCH_ENDPOINT");
+    private static final String SEARCH_API_KEY = dotenv.get("AZURE_AI_SEARCH_API_KEY");
     private static final String INDEX_NAME = "resumeblob-pojo-push-index";
 
     public static void main(String[] args) {
 
         SearchIndexClient searchIndexClient = new SearchIndexClientBuilder()
-                .endpoint(Constraints.SERVICE_ENDPOINT)
-                .credential(new AzureKeyCredential(Constraints.KEY))
+                .endpoint(SEARCH_SERVICE_ENDPOINT)
+                .credential(new AzureKeyCredential(SEARCH_API_KEY))
                 .buildClient();
         searchIndexClient
                 .createOrUpdateIndex(

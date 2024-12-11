@@ -1,0 +1,151 @@
+@baseUrl = https://<service-name>.search.windows.net
+@apiKey = <apikey>
+@searchIndex = hotels-sample-index
+
+### Create a new index
+POST {{baseUrl}}/indexes?api-version=2023-11-01  HTTP/1.1
+    Content-Type: application/json
+    api-key: {{apiKey}}
+
+{
+    "name": "hotels-vector-quickstart",
+    "fields": [
+        {
+            "name": "HotelId", 
+            "type": "Edm.String",
+            "searchable": false, 
+            "filterable": true, 
+            "retrievable": true, 
+            "sortable": false, 
+            "facetable": false,
+            "key": true
+        },
+        {
+            "name": "HotelName", 
+            "type": "Edm.String",
+            "searchable": true, 
+            "filterable": false, 
+            "retrievable": true, 
+            "sortable": true, 
+            "facetable": false
+        },
+        {
+            "name": "HotelNameVector",
+            "type": "Collection(Edm.Single)",
+            "searchable": true,
+            "retrievable": true,
+            "dimensions": 1536,
+            "vectorSearchProfile": "my-vector-profile"
+        },
+        {
+            "name": "Description", 
+            "type": "Edm.String",
+            "searchable": true, 
+            "filterable": false, 
+            "retrievable": true, 
+            "sortable": false, 
+            "facetable": false
+        },
+        {
+            "name": "DescriptionVector",
+            "type": "Collection(Edm.Single)",
+            "searchable": true,
+            "retrievable": true,
+            "dimensions": 1536,
+            "vectorSearchProfile": "my-vector-profile"
+        },
+        {
+            "name": "Category", 
+            "type": "Edm.String",
+            "searchable": true, 
+            "filterable": true, 
+            "retrievable": true, 
+            "sortable": true, 
+            "facetable": true
+        },
+        {
+            "name": "Tags",
+            "type": "Collection(Edm.String)",
+            "searchable": true,
+            "filterable": true,
+            "retrievable": true,
+            "sortable": false,
+            "facetable": true
+        },
+        {
+            "name": "Address", 
+            "type": "Edm.ComplexType",
+            "fields": [
+                {
+                    "name": "City", "type": "Edm.String",
+                    "searchable": true, "filterable": true, "retrievable": true, "sortable": true, "facetable": true
+                },
+                {
+                    "name": "StateProvince", "type": "Edm.String",
+                    "searchable": true, "filterable": true, "retrievable": true, "sortable": true, "facetable": true
+                }
+            ]
+        },
+        {
+            "name": "Location",
+            "type": "Edm.GeographyPoint",
+            "searchable": false, 
+            "filterable": true, 
+            "retrievable": true, 
+            "sortable": true, 
+            "facetable": false
+        }
+    ],
+    "vectorSearch": {
+        "algorithms": [
+            {
+                "name": "my-hnsw-vector-config-1",
+                "kind": "hnsw",
+                "hnswParameters": 
+                {
+                    "m": 4,
+                    "efConstruction": 400,
+                    "efSearch": 500,
+                    "metric": "cosine"
+                }
+            }
+        ],
+        "profiles": [      
+            {
+                "name": "my-vector-profile",
+                "algorithm": "my-hnsw-vector-config-1"
+            }
+      ]
+    },
+    "semantic": {
+        "configurations": [
+            {
+                "name": "my-semantic-config",
+                "prioritizedFields": {
+                    "titleField": {
+                        "fieldName": "HotelName"
+                    },
+                    "prioritizedContentFields": [
+                        { "fieldName": "Description" }
+                    ],
+                    "prioritizedKeywordsFields": [
+                        { "fieldName": "Tags" }
+                    ]
+                }
+            }
+        ]
+    }
+}
+
+### Run a query
+POST {{baseUrl}}/indexes/{{searchIndex}}/docs/search?api-version=2023-11-01  HTTP/1.1
+    Content-Type: application/json
+    api-key: {{apiKey}}
+
+    {
+        "search": "beach OR spa",
+        "select": "HotelId, HotelName, Description, Rating",
+        "count": true,
+        "top": 10,
+        "filter": "ParkingIncluded"
+    }

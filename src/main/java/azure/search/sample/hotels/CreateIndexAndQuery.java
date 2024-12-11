@@ -1,6 +1,7 @@
-package azure.search.sample;
+package azure.search.sample.hotels;
 
 import java.util.Arrays;
+
 import java.util.ArrayList;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -21,14 +22,16 @@ import com.azure.search.documents.indexes.models.SearchSuggester;
 import com.azure.search.documents.util.AutocompletePagedIterable;
 import com.azure.search.documents.util.SearchPagedIterable;
 
-import azure.search.sample.hotels.Address;
-import azure.search.sample.hotels.Hotel;
+import io.github.cdimascio.dotenv.Dotenv;
 
 public class CreateIndexAndQuery {
+
+    private static final Dotenv dotenv = Dotenv.load();
+
     public static void main(String[] args) {
-        var searchServiceEndpoint = Constraints.SERVICE_ENDPOINT;
-        var adminKey = new AzureKeyCredential( Constraints.KEY );
-        String indexName = Constraints.HOTELS_INDEX_NAME;
+        var searchServiceEndpoint = dotenv.get("AZURE_AI_SEARCH_ENDPOINT");
+        var adminKey = new AzureKeyCredential( dotenv.get("AZURE_AI_SEARCH_API_KEY") );
+        String indexName = "hotels-java-index";
 
         SearchIndexClient searchIndexClient = new SearchIndexClientBuilder()
                 .endpoint(searchServiceEndpoint)

@@ -8,10 +8,15 @@ import com.azure.search.documents.indexes.SearchIndexerClientBuilder;
 import com.azure.search.documents.indexes.models.IndexerExecutionStatus;
 import com.azure.search.documents.indexes.models.SearchIndexerStatus;
 
+import io.github.cdimascio.dotenv.Dotenv;
+
 public class RunIndexer {
+
+    private static final Dotenv dotenv = Dotenv.load();
     public static void main(String[] args) {
-        var searchServiceEndpoint = Constraints.SERVICE_ENDPOINT;
-        var adminKey = new AzureKeyCredential(Constraints.KEY);
+        
+        var searchServiceEndpoint = dotenv.get("AZURE_AI_SEARCH_ENDPOINT");
+        var adminKey = new AzureKeyCredential( dotenv.get("AZURE_AI_SEARCH_API_KEY") );
         final String indexName = "resumeblob-index";
         final String indexerName = "azureblob-indexer";
 
