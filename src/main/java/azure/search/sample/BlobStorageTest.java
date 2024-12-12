@@ -10,9 +10,9 @@ import io.github.cdimascio.dotenv.Dotenv;
 public class BlobStorageTest {
     public static void main(String[] args) {
 
-        Dotenv dotenv = Dotenv.load();
+        Dotenv.configure().ignoreIfMissing().ignoreIfMalformed().systemProperties().load();
 
-        String BLOB_CONNECTION_STRING = dotenv.get("BLOB_CONNECTION_STRING");
+        String BLOB_CONNECTION_STRING = System.getProperty("BLOB_CONNECTION_STRING");
         BlobServiceClient blobServiceClient = new BlobServiceClientBuilder()
                 .connectionString(BLOB_CONNECTION_STRING)
                 .buildClient();

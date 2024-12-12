@@ -14,12 +14,13 @@ import com.azure.search.documents.models.*;
 import java.util.*;
 
 public class PushToIndexPojo {
-    private static final Dotenv dotenv = Dotenv.load();
-    private static final String SEARCH_SERVICE_ENDPOINT = dotenv.get("AZURE_AI_SEARCH_ENDPOINT");
-    private static final String SEARCH_API_KEY = dotenv.get("AZURE_AI_SEARCH_API_KEY");
-    private static final String INDEX_NAME = "resumeblob-pojo-push-index";
 
     public static void main(String[] args) {
+      
+        Dotenv.configure().ignoreIfMissing().ignoreIfMalformed().systemProperties().load();
+        final String SEARCH_SERVICE_ENDPOINT = System.getProperty("AZURE_AI_SEARCH_ENDPOINT");
+        final String SEARCH_API_KEY = System.getProperty("AZURE_AI_SEARCH_API_KEY");
+        final String INDEX_NAME = "resumeblob-pojo-push-index";
 
         SearchIndexClient searchIndexClient = new SearchIndexClientBuilder()
                 .endpoint(SEARCH_SERVICE_ENDPOINT)

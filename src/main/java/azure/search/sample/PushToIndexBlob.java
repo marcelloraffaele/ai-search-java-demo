@@ -22,17 +22,16 @@ import java.util.*;
 
 public class PushToIndexBlob {
 
-    private static final Dotenv dotenv = Dotenv.load();
-
-    private static final String BLOB_CONNECTION_STRING = dotenv.get("BLOB_CONNECTION_STRING");
-    private static final String CONTAINER_NAME = "resume";
-    private static final String SEARCH_SERVICE_ENDPOINT = dotenv.get("AZURE_AI_SEARCH_ENDPOINT");
-    private static final String SEARCH_API_KEY = dotenv.get("AZURE_AI_SEARCH_API_KEY");
-    private static final String INDEX_NAME = "resumeblob-custom-push-index";
-
     // this main function is responsible for creating a search index and pushing the content of the resumes 
     // in the blob storage to the search index
     public static void main(String[] args) {
+
+        Dotenv.configure().ignoreIfMissing().ignoreIfMalformed().systemProperties().load();
+        final String BLOB_CONNECTION_STRING = System.getProperty("BLOB_CONNECTION_STRING");
+        final String CONTAINER_NAME = "resume";
+        final String SEARCH_SERVICE_ENDPOINT = System.getProperty("AZURE_AI_SEARCH_ENDPOINT");
+        final String SEARCH_API_KEY = System.getProperty("AZURE_AI_SEARCH_API_KEY");
+        final String INDEX_NAME = "resumeblob-custom-push-index";
 
         SearchIndexClient searchIndexClient = new SearchIndexClientBuilder()
                 .endpoint(SEARCH_SERVICE_ENDPOINT)
@@ -52,8 +51,8 @@ public class PushToIndexBlob {
 
         // Create a client
         DocumentAnalysisClient documentAnalysisClient = new DocumentAnalysisClientBuilder()
-            .endpoint( dotenv.get("DOCUMENTINTELLIGENCE_ENDPOINT") )
-            .credential(new AzureKeyCredential(dotenv.get("DOCUMENTINTELLIGENCE_API_KEY")))
+            .endpoint( System.getProperty("DOCUMENTINTELLIGENCE_ENDPOINT") )
+            .credential(new AzureKeyCredential(System.getProperty("DOCUMENTINTELLIGENCE_API_KEY")))
             .buildClient();
         
         //load file from blob storage

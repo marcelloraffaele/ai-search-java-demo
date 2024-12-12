@@ -27,13 +27,13 @@ import io.github.cdimascio.dotenv.Dotenv;
 
 public class QueryAISearchAndSummarize {
 
-    private static final Dotenv dotenv = Dotenv.load();
-
-    private static final String SEARCH_SERVICE_ENDPOINT = dotenv.get("AZURE_AI_SEARCH_ENDPOINT");
-    private static final String SEARCH_API_KEY = dotenv.get("AZURE_AI_SEARCH_API_KEY");
-    private static final String INDEX_NAME = "resumeblob-custom-push-index";
 
     public static void main(String[] args) {
+
+        Dotenv.configure().ignoreIfMissing().ignoreIfMalformed().systemProperties().load();
+        final String SEARCH_SERVICE_ENDPOINT = System.getProperty("AZURE_AI_SEARCH_ENDPOINT");
+        final String SEARCH_API_KEY = System.getProperty("AZURE_AI_SEARCH_API_KEY");
+        final String INDEX_NAME = "resumeblob-custom-push-index";
 
         SearchClient searchClient = new SearchClientBuilder()
                 .endpoint(SEARCH_SERVICE_ENDPOINT)
@@ -74,15 +74,15 @@ public class QueryAISearchAndSummarize {
 
         // call openai api to summarize the content of the resume
         OpenAIAsyncClient oaiClient = new OpenAIClientBuilder()
-                .credential(new AzureKeyCredential(dotenv.get("AZURE_OPENAI_API_KEY")))
-                .endpoint(dotenv.get("AZURE_OPENAI_ENDPOINT"))
+                .credential(new AzureKeyCredential(System.getProperty("AZURE_OPENAI_API_KEY")))
+                .endpoint(System.getProperty("AZURE_OPENAI_ENDPOINT"))
                 .buildAsyncClient();
 
         List<ChatRequestMessage> chatMessages = new ArrayList<>();
         chatMessages.add(new ChatRequestSystemMessage("You are a helpful assistant. You will help me to summarize a document"));
         chatMessages.add(new ChatRequestUserMessage("Please summarize this document: --- " + resume.content + " --- using only 100 words ?"));
 
-        String model = dotenv.get("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME");
+        String model = System.getProperty("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME");
         ChatCompletions chatCompletions = oaiClient.getChatCompletions( model, new ChatCompletionsOptions(chatMessages)).block();
 
         for (ChatChoice choice : chatCompletions.getChoices()) {

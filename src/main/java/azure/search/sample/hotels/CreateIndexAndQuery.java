@@ -26,11 +26,12 @@ import io.github.cdimascio.dotenv.Dotenv;
 
 public class CreateIndexAndQuery {
 
-    private static final Dotenv dotenv = Dotenv.load();
-
     public static void main(String[] args) {
-        var searchServiceEndpoint = dotenv.get("AZURE_AI_SEARCH_ENDPOINT");
-        var adminKey = new AzureKeyCredential( dotenv.get("AZURE_AI_SEARCH_API_KEY") );
+
+        Dotenv.configure().ignoreIfMissing().ignoreIfMalformed().systemProperties().load();
+        
+        var searchServiceEndpoint = System.getProperty("AZURE_AI_SEARCH_ENDPOINT");
+        var adminKey = new AzureKeyCredential( System.getProperty("AZURE_AI_SEARCH_API_KEY") );
         String indexName = "hotels-java-index";
 
         SearchIndexClient searchIndexClient = new SearchIndexClientBuilder()
