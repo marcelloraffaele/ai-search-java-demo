@@ -1,0 +1,148 @@
+package azure.search.sample.documents;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.azure.ai.openai.OpenAIAsyncClient;
+import com.azure.ai.openai.OpenAIClientBuilder;
+import com.azure.ai.openai.models.ChatChoice;
+import com.azure.ai.openai.models.ChatCompletions;
+import com.azure.ai.openai.models.ChatCompletionsOptions;
+import com.azure.ai.openai.models.ChatRequestMessage;
+import com.azure.ai.openai.models.ChatRequestSystemMessage;
+import com.azure.ai.openai.models.ChatRequestUserMessage;
+import com.azure.ai.openai.models.ChatResponseMessage;
+import com.azure.core.credential.AzureKeyCredential;
+import com.azure.core.util.Context;
+import com.azure.search.documents.SearchClient;
+import com.azure.search.documents.SearchClientBuilder;
+import com.azure.search.documents.models.SearchOptions;
+import com.azure.search.documents.models.SearchResult;
+import com.azure.search.documents.util.AutocompletePagedIterable;
+import com.azure.search.documents.util.SearchPagedIterable;
+
+import io.github.cdimascio.dotenv.Dotenv;
+
+public class QueryAISearchAndSummarize {
+
+
+    public static void main(String[] args) {
+
+        Dotenv.configure().ignoreIfMissing().ignoreIfMalformed().systemProperties().load();
+        final String SEARCH_SERVICE_ENDPOINT = System.getProperty("AZURE_AI_SEARCH_ENDPOINT");
+        final String SEARCH_API_KEY = System.getProperty("AZURE_AI_SEARCH_API_KEY");
+        final String INDEX_NAME = "documents-index";
+
+        SearchClient searchClient = new SearchClientBuilder()
+                .endpoint(SEARCH_SERVICE_ENDPOINT)
+                .credential(new AzureKeyCredential(SEARCH_API_KEY))
+                .indexName(INDEX_NAME)
+                .buildClient();
+
+        // Call the RunQueries method to invoke a series of queries
+        // System.out.println("Starting queries...\n");
+        // RunQueries(searchClient);
+
+        SearchOptions options = new SearchOptions();
+        options = new SearchOptions();
+        options.setFilter("");
+        options.setOrderBy("");
+        options.setSelect("Id", "FileName", "Content");
+
+        SearchResult result = searchClient.search("\"FileName\":  \"ux-designer-mick-red.docx\"", options, Context.NONE)
+                .stream().findFirst().get();
+        if(result == null) {
+            System.out.println("No resume found with the filename 'ux-designer-mick-red.docx'");
+            return;
+        }
+        Document resume = result.getDocument(Document.class);
+        double score = result.getScore();
+        
+        //print fount the following resume with a score of x
+        System.out.println("Found the following resume with a score of " + score);
+        System.out.println(resume);
+
+        // call openai api to summarize the content of the resume
+        OpenAIAsyncClient oaiClient = new OpenAIClientBuilder()
+                .credential(new AzureKeyCredential(System.getProperty("AZURE_OPENAI_API_KEY")))
+                .endpoint(System.getProperty("AZURE_OPENAI_ENDPOINT"))
+                .buildAsyncClient();
+
+        List<ChatRequestMessage> chatMessages = new ArrayList<>();
+        chatMessages.add(new ChatRequestSystemMessage("You are a helpful assistant. You will help me to summarize a document"));
+        chatMessages.add(new ChatRequestUserMessage("Please summarize this document: --- " + resume.content + " --- using only 50 words ?"));
+
+        String model = System.getProperty("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME");
+        ChatCompletions chatCompletions = oaiClient.getChatCompletions( model, new ChatCompletionsOptions(chatMessages)).block();
+
+        for (ChatChoice choice : chatCompletions.getChoices()) {
+            ChatResponseMessage message = choice.getMessage();
+            System.out.println("");
+            System.out.println("Summary:");
+            System.out.println(message.getContent());
+        }
+
+        // End the program
+        System.out.println("Complete.\n");
+
+    }
+
+    // Run queries, use WriteDocuments to print output
+    private static void RunQueries(SearchClient searchClient) {
+        // Query 1
+        System.out
+                .println("Query #1: Search on empty term '*' to return all documents, showing a subset of fields...\n");
+
+        SearchOptions options = new SearchOptions();
+        options.setIncludeTotalCount(true);
+        options.setFilter("");
+        options.setOrderBy("");
+        options.setSelect("Id", "FileName");
+
+        WriteSearchResults(searchClient.search("*", options, Context.NONE));
+
+        // Query 2: search Resume of filename ends with .pdf
+        System.out.println("Query #2: Search on 'pdf' to return all documents, showing a subset of fields...\n");
+
+        options = new SearchOptions();
+        options.setFilter("");
+        options.setOrderBy("");
+        options.setSelect("Id", "FileName");
+
+        WriteSearchResults(searchClient.search(".pdf", options, Context.NONE));
+
+        // Query 3// search Resume of filename equal to "Classic UIUX designer cover
+        // letter.docx"
+        System.out.println(
+                "Query #3: Search on 'Classic UIUX designer cover letter.docx' to return all documents, showing a subset of fields...\n");
+
+        options = new SearchOptions();
+        options.setFilter("");
+        options.setOrderBy("");
+        options.setSelect("Id", "FileName");
+
+        WriteSearchResults(searchClient.search("Classic UIUX designer cover letter.docx", options, Context.NONE));
+
+    }
+
+    // Write search results to console
+    private static void WriteSearchResults(SearchPagedIterable searchResults) {
+        searchResults.iterator().forEachRemaining(result -> {
+            Document r = result.getDocument(Document.class);
+            System.out.println(r);
+        });
+
+        System.out.println();
+    }
+
+    // Write autocomplete results to console
+    private static void WriteAutocompleteResults(AutocompletePagedIterable autocompleteResults) {
+        autocompleteResults.iterator().forEachRemaining(result -> {
+            String text = result.getText();
+            System.out.println(text);
+        });
+
+        System.out.println();
+    }
+
+}
